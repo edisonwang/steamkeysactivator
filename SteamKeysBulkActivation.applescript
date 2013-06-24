@@ -1,22 +1,42 @@
+#!/usr/bin/osascript
 -- Activates all Steam keys' bundle from an opened web page into Steam.
 -- Intended to use for Humble Bundle automation.
 -- author: Timothy Basanov (timofey.basanov@gmail.com)
 
-set user_browser to button returned of (display dialog "Which browser do you use?" buttons {"Cancel", "Safari", "Chrome"} default button 2)
+set available_browsers to {"Safari", "Google Chrome"}
+
+set default_browser to (name of GetDefaultBrowser())
+
+-- Required to run from the command line:
+tell application "SystemUIServer"
+	if my ApplicationIsRunning(default_browser) and available_browsers contains default_browser then
+		set user_browser to default_browser
+	else
+		set running_browsers to {}
+		repeat with browser in available_browsers
+			if my ApplicationIsRunning(browser) then
+				set running_browsers to running_browsers & browser
+			end if
+		end repeat
+		
+		set num_running to count of running_browsers
+		if num_running is equal to 0 then
+			display dialog "No browser found!"
+			return
+		else if num_running is equal to 1 then
+			set user_browser to item 1 of running_browsers
+		else
+			set user_browser to button returned of (display dialog "Which browser do you want to use?" buttons ({"Cancel"} & running_browsers) default button 2)
+		end if
+	end if
+end tell
 
 tell application "System Events"
-  set steam_application to application "/Applications/Steam.app"
+	set steam_application to application "/Applications/Steam.app"
 	
 	repeat
-		-- Load page from Safari
-		if user_browser is equal to "Safari" then
-			tell application "Safari" to set page_contents to the text of document 1
-		else if user_browser is equal to "Chrome" then
-			tell application "Google Chrome" to tell active tab of window 1
-				set page_contents to execute javascript "document.body.innerText"
-			end tell
-		end if
-		
+		-- Load page from browser
+		set page_contents to my GetPageContents(user_browser)
 		
 		-- Search for the Steam Keys in the page content
 		set steam_keys to {}
@@ -127,3 +147,39 @@ After activation process is started it's recommended to not to touch you Mac unt
 	end repeat
 	display dialog "It looks to me that your keys are imported, but it's always a good idea  to double-check." buttons {"Great!"}
 end tell
+
+on GetPageContents(user_browser)
+	if user_browser is equal to "Safari" then
+		tell application "Safari" to set page_contents to the text of document 1
+	else if user_browser is equal to "Google Chrome" then
+		tell application "Google Chrome" to tell active tab of window 1
+			set page_contents to execute javascript "document.body.innerText"
+		end tell
+	end if
+	return page_contents
+end GetPageContents
+
+-- From: http://vgable.com/blog/2009/04/24/how-to-check-if-an-application-is-running-with-applescript/
+on ApplicationIsRunning(appName)
+	tell application "System Events" to set appNameIsRunning to exists (processes where name is appName)
+	return appNameIsRunning
+end ApplicationIsRunning
+
+-- From: https://github.com/porada/toggle-default-browser/blob/master/toggle.applescript
+on GetDefaultBrowser()
+	try
+		return (application id GetDefaultBrowserBundleIndentifier() as application)
+	on error
+		-- Use Safari as the fallback browser
+		-- if `GetDefaultBrowserBundleIndentifier` doesnÕt find anything
+		return application "Safari"
+	end try
+end GetDefaultBrowser
+
+on GetDefaultBrowserBundleIndentifier()
+	-- Use `PlistBuddy` to parse the LaunchServices.plist:
+	-- extract `LSHandlerRoleAll` from a dict that contains `LSHandlerURLScheme = http`
+	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â
+		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â
+		"grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
+end GetDefaultBrowserBundleIndentifier
