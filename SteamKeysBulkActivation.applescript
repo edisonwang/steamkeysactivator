@@ -137,8 +137,8 @@ After activation process is started it's recommended to not to touch you Mac unt
 			repeat while successes is less than 5
 				repeat while (count of (windows whose name is "Product Activation" or name starts with "Install")) is not 0
 					set successes to 0
-					delay 5
 					keystroke return
+					delay 5
 				end repeat
 				set successes to successes + 1
 				delay 1
