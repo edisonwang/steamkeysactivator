@@ -3,12 +3,11 @@
 -- Intended to use for Humble Bundle automation.
 -- author: Timothy Basanov (timofey.basanov@gmail.com)
 
-set available_browsers to {"Safari", "Google Chrome"}
-
-set default_browser to (name of GetDefaultBrowser())
-
 -- Required to run from the command line:
 tell application "SystemUIServer"
+	set available_browsers to {"Safari", "Google Chrome"}
+	set default_browser to (name of GetDefaultBrowser())
+	
 	if my ApplicationIsRunning(default_browser) and available_browsers contains default_browser then
 		set user_browser to default_browser
 	else
@@ -171,7 +170,7 @@ on GetDefaultBrowser()
 		return (application id GetDefaultBrowserBundleIndentifier() as application)
 	on error
 		-- Use Safari as the fallback browser
-		-- if `GetDefaultBrowserBundleIndentifier` doesnÕt find anything
+		-- if `GetDefaultBrowserBundleIndentifier` doesn't find anything
 		return application "Safari"
 	end try
 end GetDefaultBrowser
@@ -179,7 +178,7 @@ end GetDefaultBrowser
 on GetDefaultBrowserBundleIndentifier()
 	-- Use `PlistBuddy` to parse the LaunchServices.plist:
 	-- extract `LSHandlerRoleAll` from a dict that contains `LSHandlerURLScheme = http`
-	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â
-		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â
+	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â¬
+		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â¬
 		"grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
 end GetDefaultBrowserBundleIndentifier
