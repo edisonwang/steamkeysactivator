@@ -194,7 +194,7 @@ end GetUserBrowser
 
 on GetPageContents(user_browser)
 	if user_browser is equal to "Safari" then
-		tell application "Safari" to set page_contents to the text of document 1
+		tell application user_browser to set page_contents to the text of document 1
 	else if user_browser is equal to "Google Chrome" then
 		tell application "Google Chrome" to tell active tab of window 1
 			set page_contents to execute javascript "document.body.innerText"
