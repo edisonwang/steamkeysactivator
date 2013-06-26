@@ -1,40 +1,16 @@
 #!/usr/bin/osascript
 -- Activates all Steam keys' bundle from an opened web page into Steam.
 -- Intended to use for Humble Bundle automation.
+-- home: https://github.com/timofeybasanov/steamkeysactivator
 -- author: Timothy Basanov (timofey.basanov@gmail.com)
 
 -- Required to run from the command line:
-tell application "SystemUIServer"
-	set available_browsers to {"Safari", "Google Chrome"}
-	set default_browser to (name of GetDefaultBrowser())
-	
-	if my ApplicationIsRunning(default_browser) and available_browsers contains default_browser then
-		set user_browser to default_browser
-	else
-		set running_browsers to {}
-		repeat with browser in available_browsers
-			if my ApplicationIsRunning(browser) then
-				set running_browsers to running_browsers & browser
-			end if
-		end repeat
-		
-		set num_running to count of running_browsers
-		if num_running is equal to 0 then
-			display dialog "No browser found!"
-			return
-		else if num_running is equal to 1 then
-			set user_browser to item 1 of running_browsers
-		else
-			set user_browser to button returned of (display dialog "Which browser do you want to use?" buttons ({"Cancel"} & running_browsers) default button 2)
-		end if
-	end if
-end tell
-
 tell application "System Events"
 	set steam_application to application "/Applications/Steam.app"
 	
 	repeat
 		-- Load page from browser
+		set user_browser to my GetUserBrowser()
 		set page_contents to my GetPageContents(user_browser)
 		
 		-- Search for the Steam Keys in the page content
@@ -78,7 +54,7 @@ Please, make sure correct site's page is loaded and keys are visible." with titl
 	display dialog ("Ready to activate next Steam keys:
 " & steam_keys as string) & "
 
-After activation process is started it's recommended to not to touch you Mac until its is finished." buttons {"Cancel", "I promise to not to touch my Mac"}
+After activation process is started it's recommended to not to touch you Mac until its is finished." with title "Loading Steam keys" buttons {"Cancel", "I promise to not to touch my Mac"}
 	activate steam_application
 	set successes to 0
 	-- provides some guaranties against data races
@@ -102,15 +78,16 @@ After activation process is started it's recommended to not to touch you Mac unt
 				end if
 			end repeat
 		end tell
-		delay 1
+		my SmallDelay()
 	end repeat
 	
+	set failed_steam_keys to {}
 	
 	-- Entering all the keys gathered
 	repeat with steam_key in steam_keys
 		tell process "Steam"
 			-- Close all opened windows
-			delay 1
+			my SmallDelay()
 			repeat
 				set window_menu_size to count of menu items of menus of menu bar item "Window" of menu bars
 				click menu item "Close" of menus of menu bar item "Window" of menu bars
@@ -123,29 +100,94 @@ After activation process is started it's recommended to not to touch you Mac unt
 			-- Click "Activate" in menu
 			click menu item "Activate a Product on Steam..." of menus of menu bar item "Games" of menu bars
 			-- Go to product code activation page
-			delay 1
+			my BigDelay()
 			keystroke return
-			delay 1
+			my BigDelay()
 			keystroke return
-			-- Entering Key
-			delay 2
-			keystroke steam_key
+			-- Copy & Pasting Key
+			set the clipboard to steam_key
+			repeat 3 times
+				my SmallDelay()
+				keystroke tab
+			end repeat
+			my SmallDelay()
+			key down command
+			my SmallDelay()
+			keystroke "v"
+			my SmallDelay()
+			key up command
+			my SmallDelay()
 			-- OK'ing all requests until window is closed
 			set successes to 0
 			-- provides some guaranties against data races
-			repeat while successes is less than 5
-				repeat while (count of (windows whose name is "Product Activation" or name starts with "Install")) is not 0
+			repeat while successes is less than 3
+				if (count of (windows whose name contains "Error" and name starts with "Steam")) is not 0 then
+					set result to display dialog "HmmÉ there is some kind of problem during activation of this key:
+" & steam_key & "
+
+Anyway, I'll continue by myself after 5 seconds.
+Please wait..." with title "Loading Steam keys" buttons {"Cancel"} cancel button 1 giving up after 5
+					copy steam_key as string to the end of failed_steam_keys
+					tell steam_application to activate
+					keystroke return
+				end if
+				if (count of (windows whose name is "Product Activation" or name starts with "Install")) is not 0 then
 					set successes to 0
 					keystroke return
-					delay 5
-				end repeat
-				set successes to successes + 1
-				delay 1
+				else
+					set successes to successes + 1
+				end if
+				my SmallDelay()
 			end repeat
 		end tell
 	end repeat
-	display dialog "It looks to me that your keys are imported, but it's always a good idea  to double-check." buttons {"Great!"}
+	if failed_steam_keys's length is not 0 then
+		set AppleScript's text item delimiters to "
+"
+		display dialog ("These keys were not activated for some reason:
+" & failed_steam_keys as string) & "
+
+But usually that's expected as you can not install Windows games on a Mac." with title "Loading Steam keys" buttons {"Great!"} default button 1
+	else
+		display dialog "It looks to me that your keys are imported, but it's always a good idea to double-check." with title "Loading Steam keys" buttons {"Great!"}
+	end if
 end tell
+
+on BigDelay()
+	delay 2
+end BigDelay
+
+on SmallDelay()
+	delay 0.5
+end SmallDelay
+
+on GetUserBrowser()
+	tell application "SystemUIServer"
+		set available_browsers to {"Safari", "Google Chrome"}
+		set default_browser to (name of my GetDefaultBrowser())
+		
+		if my ApplicationIsRunning(default_browser) and available_browsers contains default_browser then
+			return default_browser
+		else
+			set running_browsers to {}
+			repeat with browser in available_browsers
+				if my ApplicationIsRunning(browser) then
+					set running_browsers to running_browsers & browser
+				end if
+			end repeat
+			
+			set num_running to count of running_browsers
+			if num_running is equal to 0 then
+				-- This is bad, defaulting to catch-all case
+			else if num_running is equal to 1 then
+				return item 1 of running_browsers
+			else
+				return button returned of (display dialog "Which browser do you want to use?" buttons ({"Cancel"} & running_browsers) default button 2)
+			end if
+		end if
+	end tell
+	return "Safari or Chrome"
+end GetUserBrowser
 
 on GetPageContents(user_browser)
 	if user_browser is equal to "Safari" then
@@ -154,6 +196,9 @@ on GetPageContents(user_browser)
 		tell application "Google Chrome" to tell active tab of window 1
 			set page_contents to execute javascript "document.body.innerText"
 		end tell
+	else
+		-- We always retutn string
+		return ""
 	end if
 	return page_contents
 end GetPageContents
@@ -178,7 +223,7 @@ end GetDefaultBrowser
 on GetDefaultBrowserBundleIndentifier()
 	-- Use `PlistBuddy` to parse the LaunchServices.plist:
 	-- extract `LSHandlerRoleAll` from a dict that contains `LSHandlerURLScheme = http`
-	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â¬
-		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â¬
+	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â
+		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â
 		"grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
 end GetDefaultBrowserBundleIndentifier
