@@ -3,7 +3,7 @@ steamkeysactivator
 
 Activates Steam Keys in bulks (Mac only)
 
-It's a small and dumb script that reads currently open Safari page,
+It's a small and dumb script that reads the currently open Safari/Chrome page,
 searches for Steam keys and uses local Steam client to activate them one by one.
 
 It's particularly useful for Humble Bundles.
