@@ -226,7 +226,5 @@ end GetDefaultBrowser
 on GetDefaultBrowserBundleIndentifier()
 	-- Use `PlistBuddy` to parse the LaunchServices.plist:
 	-- extract `LSHandlerRoleAll` from a dict that contains `LSHandlerURLScheme = http`
-	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & ¬
-		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & ¬
-		"grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
+	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & (POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & "grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
 end GetDefaultBrowserBundleIndentifier
