@@ -59,6 +59,9 @@ After activation process is started it's recommended to not to touch you Mac unt
 	set successes to 0
 	-- provides some guaranties against data races
 	repeat while successes is less than 3
+		-- Reset successes to ensure all three requirements satisfied
+		set successes to 0
+		
 		-- waiting for Steam app to load
 		tell process "Steam"
 			if (count of windows) is 0 then
@@ -122,7 +125,7 @@ After activation process is started it's recommended to not to touch you Mac unt
 			-- provides some guaranties against data races
 			repeat while successes is less than 3
 				if (count of (windows whose name contains "Error" and name starts with "Steam")) is not 0 then
-					set result to display dialog "HmmÉ there is some kind of problem during activation of this key:
+					set result to display dialog "Hmm... there is some kind of problem during activation of this key:
 " & steam_key & "
 
 Anyway, I'll continue by myself after 5 seconds.
@@ -223,7 +226,7 @@ end GetDefaultBrowser
 on GetDefaultBrowserBundleIndentifier()
 	-- Use `PlistBuddy` to parse the LaunchServices.plist:
 	-- extract `LSHandlerRoleAll` from a dict that contains `LSHandlerURLScheme = http`
-	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â
-		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â
+	do shell script "/usr/libexec/PlistBuddy -c 'Print :LSHandlers' " & Â¬
+		(POSIX path of (path to preferences) as Unicode text) & "com.apple.LaunchServices.plist | " & Â¬
 		"grep 'LSHandlerURLScheme = http$' -C 2 | grep 'LSHandlerRoleAll = ' | cut -d '=' -f 2 | tr -d ' '"
 end GetDefaultBrowserBundleIndentifier
