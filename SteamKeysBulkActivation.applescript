@@ -58,10 +58,7 @@ After activation process is started it's recommended to not to touch you Mac unt
 	activate steam_application
 	set successes to 0
 	-- provides some guaranties against data races
-	repeat while successes is less than 3
-		-- Reset successes to ensure all three requirements satisfied
-		set successes to 0
-		
+	repeat while successes is less than 5
 		-- waiting for Steam app to load
 		tell process "Steam"
 			if (count of windows) is 0 then
