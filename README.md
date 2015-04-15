@@ -1,9 +1,3 @@
-Deprecated
-=================
-
-Recently Humble Bundle implemented direct Steam connection, check it out here:
-https://www.humblebundle.com/user/settings
-
 steamkeysactivator
 ==================
 
@@ -18,13 +12,15 @@ How to run:
 
     1) Check that you are using Mac OS and not Windows or Linux
     2) Download everything to your Mac
-    3) Run this application and it should work just fine
+    3) Run this application
+    4) Check System Preferences, Security & Privacy, Privacy, Accessibility
+    5) In case app does not run try to run script itself in a Script Editor
 
 Known to work with:
 
-    1) Humble Bundle 6
-    2) Steam in English September 2013th version
-    3) Mac OS Lion
+    1) Humble Bundle 14
+    2) Steam in English April 2015th version
+    3) Mac OS Yosemite
 
 Good luck!
 Feel free to send patches and bugs!
