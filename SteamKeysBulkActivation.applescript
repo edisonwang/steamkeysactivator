@@ -131,9 +131,12 @@ Please wait..." with title "Loading Steam keys" buttons {"Cancel"} cancel button
 					tell steam_application to activate
 					keystroke return
 				end if
-				if (count of (windows whose name is "Product Activation" or name starts with "Install")) is not 0 then
+				if (count of (windows whose name is "Product Activation")) is not 0 then
 					set successes to 0
 					keystroke return
+				else if (count of (windows whose name starts with "Install")) is not 0 then
+					set successes to 0
+					key code 53
 				else
 					set successes to successes + 1
 				end if
